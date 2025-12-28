@@ -1,36 +1,30 @@
 services:
   nginx:
-    image: nginx:1.17-alpine
+    build:
+      context: ./
+      dockerfile: ./docker-compose/nginx.dockerfile
     restart: unless-stopped
     ports:
       - '${PORT:-8080}:80'
-    volumes:
-      - ./:/var/www
-      - ./docker-compose/nginx:/etc/nginx/conf.d/
     depends_on:
       - app
     networks:
       - crater
-    # Wait 20s for App to be ready before starting Nginx
-    command: sh -c "sleep 20 && nginx -g 'daemon off;'"
 
   app:
     build:
-      args:
-        user: crater-user
-        uid: 1000
       context: ./
       dockerfile: Dockerfile
     image: crater-php
-    user: root
     restart: unless-stopped
     working_dir: /var/www/
     volumes:
-      - ./:/var/www
-      - ./docker-compose/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:rw,delegated
+      # Only mount PHP config, not application code
+      - ./docker-compose/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     networks:
       - crater
-    command: sh -c "git config --global --add safe.directory /var/www && composer install --no-interaction --optimize-autoloader && php artisan migrate --force && php artisan package:discover && php-fpm -R"
+    # Run migrations on startup, then start PHP-FPM
+    command: sh -c "php artisan migrate --force && php artisan package:discover && php-fpm -R"
     environment:
       - APP_ENV=${APP_ENV}
       - APP_KEY=${APP_KEY}
@@ -72,7 +66,7 @@ services:
     image: mariadb
     restart: always
     volumes:
-      - crater_db_force_reset:/var/lib/mysql
+      - crater_db_data:/var/lib/mysql
     networks:
       - crater
     environment:
@@ -85,18 +79,12 @@ services:
 
   cron:
     build:
-      args:
-        user: crater-user
-        uid: 1000
       context: ./
       dockerfile: ./docker-compose/cron.dockerfile
-    volumes:
-      - ./:/var/www
+    depends_on:
+      - app
     networks:
       - crater
-    user: root
-    # Wait for vendor/autoload.php to exist (App runs composer install first)
-    command: sh -c "echo 'Waiting for vendor...' && while [ ! -f /var/www/vendor/autoload.php ]; do sleep 5; done && echo 'Vendor ready!' && echo '* * * * * cd /var/www && /usr/local/bin/php artisan schedule:run' | crontab -u root - && crond -f"
     environment:
       - APP_ENV=${APP_ENV}
       - APP_KEY=${APP_KEY}
@@ -135,8 +123,7 @@ services:
       - CRON_JOB_AUTH_TOKEN=${CRON_JOB_AUTH_TOKEN}
 
 volumes:
-  # Rename volume to force fresh DB initialization
-  crater_db_force_reset:
+  crater_db_data:
 
 
 networks:
