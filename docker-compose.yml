@@ -23,8 +23,16 @@ services:
       - ./docker-compose/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     networks:
       - crater
-    # Run migrations on startup, then start PHP-FPM
-    command: sh -c "php artisan migrate --force && php artisan package:discover && php-fpm -R"
+    # Setup Laravel properly, run migrations, then start PHP-FPM
+    command: >
+      sh -c "
+        chmod -R 777 /var/www/storage /var/www/bootstrap/cache &&
+        php artisan storage:link --force || true &&
+        php artisan config:clear &&
+        php artisan migrate --force &&
+        php artisan package:discover --ansi &&
+        php-fpm -R
+      "
     environment:
       - APP_ENV=${APP_ENV}
       - APP_KEY=${APP_KEY}
