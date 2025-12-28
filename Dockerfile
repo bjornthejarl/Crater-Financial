@@ -38,8 +38,8 @@ COPY . /var/www
 # Mark directory as safe for git (prevents dubious ownership errors)
 RUN git config --global --add safe.directory /var/www
 
-# Install Composer dependencies during build
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+# Install Composer dependencies (skip scripts to avoid dev dependency issues)
+RUN composer install --no-interaction --optimize-autoloader --no-dev --no-scripts
 
 # Set proper permissions
 RUN chown -R root:root /var/www \

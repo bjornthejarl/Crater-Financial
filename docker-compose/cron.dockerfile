@@ -17,8 +17,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Mark directory as safe for git
 RUN git config --global --add safe.directory /var/www || true
 
-# Install Composer dependencies
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+# Install Composer dependencies (skip scripts - they'll run in app container)
+RUN composer install --no-interaction --optimize-autoloader --no-dev --no-scripts
 
 # Set up crontab for Laravel scheduler (runs every minute)
 RUN echo "* * * * * cd /var/www && /usr/local/bin/php artisan schedule:run >> /dev/null 2>&1" > /etc/crontabs/root
