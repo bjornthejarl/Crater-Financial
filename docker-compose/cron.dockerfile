@@ -1,7 +1,14 @@
-FROM php:8.0-fpm-alpine
+FROM php:8.1-fpm-alpine
+
+ARG user
+ARG uid
 
 RUN apk add --no-cache \
-    php8-bcmath
+    php8-bcmath \
+    shadow
+
+# Create system user to run Cron
+RUN addgroup -g $uid $user && adduser -u $uid -G $user -h /home/$user -D $user
 
 RUN docker-php-ext-install pdo pdo_mysql bcmath
 
