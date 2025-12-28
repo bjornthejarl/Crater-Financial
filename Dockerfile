@@ -44,7 +44,7 @@ RUN git config --global --add safe.directory /var/www
 RUN composer install --no-interaction --optimize-autoloader --no-dev --no-scripts
 
 # Install npm dependencies and build frontend
-RUN npm install && npm run build
+RUN npm install --legacy-peer-deps && npm run build
 
 # Set proper permissions
 RUN chown -R root:root /var/www \
