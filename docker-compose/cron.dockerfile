@@ -4,7 +4,6 @@ ARG user
 ARG uid
 
 RUN apk add --no-cache \
-    php8-bcmath \
     shadow
 
 # Create system user to run Cron
