@@ -28,7 +28,7 @@ services:
       - ./docker-compose/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:rw,delegated
     networks:
       - crater
-    command: sh -c "git config --global --add safe.directory /var/www && composer install --no-interaction --optimize-autoloader && php artisan migrate --force && php artisan package:discover && php-fpm"
+    command: sh -c "git config --global --add safe.directory /var/www && composer install --no-interaction --optimize-autoloader && php artisan migrate --force && php artisan package:discover && php-fpm -R"
     environment:
       - APP_ENV=${APP_ENV}
       - APP_KEY=${APP_KEY}
@@ -88,6 +88,8 @@ services:
         uid: 1000
       context: ./
       dockerfile: ./docker-compose/cron.dockerfile
+    volumes:
+      - ./:/var/www
     networks:
       - crater
     user: root

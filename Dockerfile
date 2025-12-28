@@ -35,8 +35,8 @@ RUN mkdir -p /home/$user/.composer && \
     chown -R $user:$user /home/$user
 
 # Patch www.conf to remove user/group directives (fixes FPM warnings/errors)
-RUN sed -i 's/user = www-data/;user = www-data/g' /usr/local/etc/php-fpm.d/www.conf
-RUN sed -i 's/group = www-data/;group = www-data/g' /usr/local/etc/php-fpm.d/www.conf
+RUN sed -i 's/user = www-data/user = root/g' /usr/local/etc/php-fpm.d/www.conf
+RUN sed -i 's/group = www-data/group = root/g' /usr/local/etc/php-fpm.d/www.conf
 
 # Set working directory
 WORKDIR /var/www
