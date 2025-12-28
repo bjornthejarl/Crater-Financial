@@ -70,7 +70,7 @@ services:
     image: mariadb
     restart: always
     volumes:
-      - db:/var/lib/mysql
+      - crater_db_force_reset:/var/lib/mysql
     networks:
       - crater
     environment:
@@ -91,7 +91,8 @@ services:
     networks:
       - crater
     user: root
-    command: sh -c "echo '* * * * * cd /var/www && /usr/local/bin/php artisan schedule:run >> /dev/stdout 2>&1' | crontab -u crater-user - && crond -f"
+    # Fix: Remove redirect to /dev/stdout to prevent permission error.
+    command: sh -c "echo '* * * * * cd /var/www && /usr/local/bin/php artisan schedule:run' | crontab -u crater-user - && crond -f"
     environment:
       - APP_ENV=${APP_ENV}
       - APP_KEY=${APP_KEY}
@@ -130,7 +131,8 @@ services:
       - CRON_JOB_AUTH_TOKEN=${CRON_JOB_AUTH_TOKEN}
 
 volumes:
-  db:
+  # Rename volume to force fresh DB initialization
+  crater_db_force_reset:
 
 
 networks:
