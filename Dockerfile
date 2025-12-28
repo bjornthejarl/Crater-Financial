@@ -12,8 +12,11 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libmagickwand-dev \
     mariadb-client \
-    nodejs \
-    npm
+    gnupg
+
+# Install Node.js 18.x (LTS) from NodeSource
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -44,7 +47,8 @@ RUN git config --global --add safe.directory /var/www
 RUN composer install --no-interaction --optimize-autoloader --no-dev --no-scripts
 
 # Install npm dependencies and build frontend
-RUN npm install --legacy-peer-deps && npm run build
+# Remove package-lock.json to get fresh dependency resolution
+RUN rm -f package-lock.json && npm install && npm run build
 
 # Set proper permissions
 RUN chown -R root:root /var/www \
