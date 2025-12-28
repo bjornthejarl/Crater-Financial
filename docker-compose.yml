@@ -11,6 +11,8 @@ services:
       - app
     networks:
       - crater
+    # Wait 20s for App to be ready before starting Nginx
+    command: sh -c "sleep 20 && nginx -g 'daemon off;'"
 
   app:
     build:
@@ -93,8 +95,8 @@ services:
     networks:
       - crater
     user: root
-    # Fix: Remove redirect to /dev/stdout to prevent permission error.
-    command: sh -c "echo '* * * * * cd /var/www && /usr/local/bin/php artisan schedule:run' | crontab -u crater-user - && crond -f"
+    # Wait for vendor/autoload.php to exist (App runs composer install first)
+    command: sh -c "echo 'Waiting for vendor...' && while [ ! -f /var/www/vendor/autoload.php ]; do sleep 5; done && echo 'Vendor ready!' && echo '* * * * * cd /var/www && /usr/local/bin/php artisan schedule:run' | crontab -u root - && crond -f"
     environment:
       - APP_ENV=${APP_ENV}
       - APP_KEY=${APP_KEY}
