@@ -1,0 +1,124 @@
+services:
+  nginx:
+    image: nginx:1.17-alpine
+    restart: unless-stopped
+    ports:
+      - '${PORT:-8080}:80'
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    depends_on:
+      - app
+
+  app:
+    build:
+      args:
+        user: crater-user
+        uid: 1000
+      context: ./
+      dockerfile: Dockerfile
+    image: crater-php
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:rw,delegated
+    command: sh -c "php artisan migrate --force && php artisan package:discover && php-fpm"
+    environment:
+      - APP_ENV=${APP_ENV}
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=${APP_DEBUG}
+      - APP_LOG_LEVEL=${APP_LOG_LEVEL}
+      - APP_URL=${APP_URL}
+      - DB_CONNECTION=${DB_CONNECTION}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - BROADCAST_DRIVER=${BROADCAST_DRIVER}
+      - CACHE_DRIVER=${CACHE_DRIVER}
+      - QUEUE_DRIVER=${QUEUE_DRIVER}
+      - SESSION_DRIVER=${SESSION_DRIVER}
+      - SESSION_LIFETIME=${SESSION_LIFETIME}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT}
+      - MAIL_DRIVER=${MAIL_DRIVER}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
+      - PUSHER_APP_ID=${PUSHER_APP_ID}
+      - PUSHER_KEY=${PUSHER_KEY}
+      - PUSHER_SECRET=${PUSHER_SECRET}
+      - PUSHER_APP_CLUSTER=${PUSHER_APP_CLUSTER}
+      - SANCTUM_STATEFUL_DOMAINS=${SANCTUM_STATEFUL_DOMAINS}
+      - SESSION_DOMAIN=${SESSION_DOMAIN}
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES}
+      - CRON_JOB_AUTH_TOKEN=${CRON_JOB_AUTH_TOKEN}
+
+  db:
+    image: mariadb
+    restart: always
+    volumes:
+      - db:/var/lib/mysql
+    environment:
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+    ports:
+      - '${DB_PORT}:3306'
+
+  cron:
+    build:
+      args:
+        user: crater-user
+        uid: 1000
+      context: ./
+      dockerfile: ./docker-compose/cron.dockerfile
+    user: root
+    command: sh -c "echo '* * * * * cd /var/www && /usr/local/bin/php artisan schedule:run >> /dev/stdout 2>&1' | crontab -u crater-user - && cron -f"
+    environment:
+      - APP_ENV=${APP_ENV}
+      - APP_KEY=${APP_KEY}
+      - APP_DEBUG=${APP_DEBUG}
+      - APP_LOG_LEVEL=${APP_LOG_LEVEL}
+      - APP_URL=${APP_URL}
+      - DB_CONNECTION=${DB_CONNECTION}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - BROADCAST_DRIVER=${BROADCAST_DRIVER}
+      - CACHE_DRIVER=${CACHE_DRIVER}
+      - QUEUE_DRIVER=${QUEUE_DRIVER}
+      - SESSION_DRIVER=${SESSION_DRIVER}
+      - SESSION_LIFETIME=${SESSION_LIFETIME}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PORT=${REDIS_PORT}
+      - MAIL_DRIVER=${MAIL_DRIVER}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_ENCRYPTION=${MAIL_ENCRYPTION}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
+      - PUSHER_APP_ID=${PUSHER_APP_ID}
+      - PUSHER_KEY=${PUSHER_KEY}
+      - PUSHER_SECRET=${PUSHER_SECRET}
+      - PUSHER_APP_CLUSTER=${PUSHER_APP_CLUSTER}
+      - SANCTUM_STATEFUL_DOMAINS=${SANCTUM_STATEFUL_DOMAINS}
+      - SESSION_DOMAIN=${SESSION_DOMAIN}
+      - TRUSTED_PROXIES=${TRUSTED_PROXIES}
+      - CRON_JOB_AUTH_TOKEN=${CRON_JOB_AUTH_TOKEN}
+
+volumes:
+  db:
