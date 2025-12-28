@@ -1,9 +1,9 @@
 FROM php:8.1-fpm-alpine
 
-RUN apk add --no-cache shadow
+RUN apk add --no-cache shadow git libzip-dev
 
 # Install PHP extensions needed for Laravel
-RUN docker-php-ext-install pdo pdo_mysql bcmath
+RUN docker-php-ext-install pdo pdo_mysql bcmath exif zip
 
 # Set working directory
 WORKDIR /var/www
