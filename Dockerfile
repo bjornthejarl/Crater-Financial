@@ -11,7 +11,9 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     libmagickwand-dev \
-    mariadb-client
+    mariadb-client \
+    nodejs \
+    npm
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -40,6 +42,9 @@ RUN git config --global --add safe.directory /var/www
 
 # Install Composer dependencies (skip scripts to avoid dev dependency issues)
 RUN composer install --no-interaction --optimize-autoloader --no-dev --no-scripts
+
+# Install npm dependencies and build frontend
+RUN npm install && npm run build
 
 # Set proper permissions
 RUN chown -R root:root /var/www \
